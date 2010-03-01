@@ -3,6 +3,7 @@ from nose.plugins.base import Plugin
 
 import traceback
 import datetime
+import errno
 import cgi
 
 class NoseHTML( Plugin ):
@@ -32,7 +33,14 @@ class NoseHTML( Plugin ):
     def finalize(self, result):
         """ Write out report as serialized XML """
         print >> self.report_file, HTML_END
-        self.report_file.close()
+        # When run via buildbot on NFS on Solaris, this close() will encounter
+        # the NFS bug described in OpenSolaris bug ID #6708290.  So we work
+        # around that bug.
+        try:
+            self.report_file.close()
+        except IOError, e:
+            if e.errno != errno.EINVAL:
+                raise
 
     def print_test( self, status, test, error=None ):
         self.counter += 1
