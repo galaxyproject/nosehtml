@@ -6,6 +6,11 @@ import datetime
 import errno
 import cgi
 
+class LogFile( object ):
+    def __init__( self, file, counter ):
+        self.file = file
+        self.counter = counter
+
 class NoseHTML( Plugin ):
     """
     Styled HTML output plugin for nose.
@@ -26,16 +31,14 @@ class NoseHTML( Plugin ):
         self.error_fname = options.error_file
 
     def begin(self):
-        self.report_counter = 0
-        self.error_counter = 0
-        self.report_file = open( self.report_fname, "w" )
-        self.error_file = open( self.error_fname, "w" )
-        for f in ( self.report_file, self.error_file ):
+        self.reportlog = LogFile( open( self.report_fname, "w" ), 0 )
+        self.errorlog = LogFile( open( self.error_fname, "w" ), 0 )
+        for f in ( self.reportlog.file, self.errorlog.file ):
             print >> f, HTML_START
             f.flush()
         
     def finalize(self, result):
-        for f in ( self.report_file, self.error_file ):
+        for f in ( self.reportlog.file, self.errorlog.file ):
             print >> f, HTML_END
             # When run via buildbot on NFS on Solaris, this close() will encounter
             # the NFS bug described in OpenSolaris bug ID #6708290.  So we work
@@ -47,29 +50,29 @@ class NoseHTML( Plugin ):
                     raise
 
     def print_test( self, status, test, error=None ):
-        files = [ ( self.report_counter, self.report_file ) ]
+        fs = [ self.reportlog ]
         if error:
-            files.append( ( self.error_counter, self.error_file ) )
-        for counter, file in files:
-            counter += 1
-            print >> file, "<div class='test %s'>" % status
+            fs.append( self.errorlog )
+        for f in fs:
+            f.counter += 1
+            print >> f.file, "<div class='test %s'>" % status
             if test.id():
-                print >> file, "<div><span class='label'>ID:</span> %s</div>" % test.id()
+                print >> f.file, "<div><span class='label'>ID:</span> %s</div>" % test.id()
             if test.shortDescription():
-                print >> file, "<div><span class='label'>Description:</span> %s</div>" % test.shortDescription()
+                print >> f.file, "<div><span class='label'>Description:</span> %s</div>" % test.shortDescription()
             if status:
-                print >> file, "<div><span class='label'>Status:</span> %s</div>" % status
+                print >> f.file, "<div><span class='label'>Status:</span> %s</div>" % status
             if test.capturedOutput:
-                print >> file, "<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % counter
-                print >> file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( counter, cgi.escape( test.capturedOutput ) )
+                print >> f.file, "<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter
+                print >> f.file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( test.capturedOutput ) )
             if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
-                print >> file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % counter
-                print >> file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
+                print >> f.file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter
+                print >> f.file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
             if error:
-                print >> file, "<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % counter
-                print >> file, "<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( counter, cgi.escape( error ) )
-            print >> file, "</div>"
-            file.flush()
+                print >> f.file, "<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter
+                print >> f.file, "<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, cgi.escape( error ) )
+            print >> f.file, "</div>"
+            f.file.flush()
 
     def addSkip(self, test):
         """
