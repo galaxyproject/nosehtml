@@ -12,56 +12,64 @@ class NoseHTML( Plugin ):
     """
 
     def help(self):
-        return "Output HML report of test status into reportfile (specifiable with --html-report-file"
+        return "Output HTML report of test status into reportfile (specifiable with --html-report-file)"
 
     def add_options(self, parser, env=os.environ):
         Plugin.add_options(self, parser, env)
-        parser.add_option("--html-report-file", action="store", default="nose_report.xml", dest="report_file", help="File to output XML report to")
+        parser.add_option("--html-report-file", action="store", default="nose_report.html", dest="report_file", help="File to output HTML report to")
+        parser.add_option("--html-error-file", action="store", default="/dev/null", dest="error_file", help="File to output HTML error report to")
     
     def configure(self, options, config):
         Plugin.configure(self, options, config)
         self.conf = config
         self.report_fname = options.report_file
+        self.error_fname = options.error_file
 
     def begin(self):
-        """ If a file already exists and --xml-accumulate is set, we add into that, otherwise, create a new one """
-        self.counter = 0
+        self.report_counter = 0
+        self.error_counter = 0
         self.report_file = open( self.report_fname, "w" )
-        print >> self.report_file, HTML_START
-        self.report_file.flush()
+        self.error_file = open( self.error_fname, "w" )
+        for f in ( self.report_file, self.error_file ):
+            print >> f, HTML_START
+            f.flush()
         
     def finalize(self, result):
-        """ Write out report as serialized XML """
-        print >> self.report_file, HTML_END
-        # When run via buildbot on NFS on Solaris, this close() will encounter
-        # the NFS bug described in OpenSolaris bug ID #6708290.  So we work
-        # around that bug.
-        try:
-            self.report_file.close()
-        except IOError, e:
-            if e.errno != errno.EINVAL:
-                raise
+        for f in ( self.report_file, self.error_file ):
+            print >> f, HTML_END
+            # When run via buildbot on NFS on Solaris, this close() will encounter
+            # the NFS bug described in OpenSolaris bug ID #6708290.  So we work
+            # around that bug.
+            try:
+                f.close()
+            except IOError, e:
+                if e.errno != errno.EINVAL:
+                    raise
 
     def print_test( self, status, test, error=None ):
-        self.counter += 1
-        print >> self.report_file, "<div class='test %s'>" % status
-        if test.id():
-            print >> self.report_file, "<div><span class='label'>ID:</span> %s</div>" % test.id()
-        if test.shortDescription():
-            print >> self.report_file, "<div><span class='label'>Description:</span> %s</div>" % test.shortDescription()
-        if status:
-            print >> self.report_file, "<div><span class='label'>Status:</span> %s</div>" % status
-        if test.capturedOutput:
-            print >> self.report_file, "<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % self.counter
-            print >> self.report_file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( self.counter, cgi.escape( test.capturedOutput ) )
-        if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
-            print >> self.report_file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % self.counter
-            print >> self.report_file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( self.counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
+        files = [ ( self.report_counter, self.report_file ) ]
         if error:
-            print >> self.report_file, "<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % self.counter
-            print >> self.report_file, "<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( self.counter, cgi.escape( error ) )
-        print >> self.report_file, "</div>"
-        self.report_file.flush()
+            files.append( ( self.error_counter, self.error_file ) )
+        for counter, file in files:
+            counter += 1
+            print >> file, "<div class='test %s'>" % status
+            if test.id():
+                print >> file, "<div><span class='label'>ID:</span> %s</div>" % test.id()
+            if test.shortDescription():
+                print >> file, "<div><span class='label'>Description:</span> %s</div>" % test.shortDescription()
+            if status:
+                print >> file, "<div><span class='label'>Status:</span> %s</div>" % status
+            if test.capturedOutput:
+                print >> file, "<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % counter
+                print >> file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( counter, cgi.escape( test.capturedOutput ) )
+            if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
+                print >> file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % counter
+                print >> file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
+            if error:
+                print >> file, "<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % counter
+                print >> file, "<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( counter, cgi.escape( error ) )
+            print >> file, "</div>"
+            file.flush()
 
     def addSkip(self, test):
         """
