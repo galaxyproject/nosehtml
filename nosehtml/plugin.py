@@ -66,8 +66,8 @@ class NoseHTML( Plugin ):
                 print >> f.file, "<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter
                 print >> f.file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( test.capturedOutput ) )
             if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
-                print >> f.file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter
-                print >> f.file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
+                print >> f.file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter
+                print >> f.file, "<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % ( f.counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
             if error:
                 print >> f.file, "<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter
                 print >> f.file, "<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, cgi.escape( error ) )
