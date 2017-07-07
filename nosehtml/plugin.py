@@ -2,10 +2,23 @@ from __future__ import print_function
 
 import cgi
 import errno
+import io
 import os
+import sys
 import traceback
 
 from nose.plugins.base import Plugin
+
+
+def unicodify(value):
+    """
+    Given a string, returns a Unicode string.
+    """
+    if value is None:
+        return None
+    if sys.version_info[0] == 2 and not isinstance(value, unicode):
+        value = unicode(value, 'utf-8', 'replace')
+    return value
 
 
 class LogFile( object ):
@@ -34,8 +47,8 @@ class NoseHTML( Plugin ):
         self.error_fname = options.error_file
 
     def begin(self):
-        self.reportlog = LogFile( open( self.report_fname, "w" ), 0 )
-        self.errorlog = LogFile( open( self.error_fname, "w" ), 0 )
+        self.reportlog = LogFile( io.open( self.report_fname, "w", encoding='utf-8' ), 0 )
+        self.errorlog = LogFile( io.open( self.error_fname, "w", encoding='utf-8' ), 0 )
         for f in ( self.reportlog.file, self.errorlog.file ):
             print(HTML_START, file=f)
             f.flush()
@@ -58,23 +71,23 @@ class NoseHTML( Plugin ):
             fs.append( self.errorlog )
         for f in fs:
             f.counter += 1
-            print("<div class='test %s'>" % status, file=f.file)
+            print(u"<div class='test %s'>" % unicodify(status), file=f.file)
             if test.id():
-                print("<div><span class='label'>ID:</span> %s</div>" % test.id(), file=f.file)
+                print(u"<div><span class='label'>ID:</span> %s</div>" % unicodify(test.id()), file=f.file)
             if test.shortDescription():
-                print("<div><span class='label'>Description:</span> %s</div>" % test.shortDescription(), file=f.file)
+                print(u"<div><span class='label'>Description:</span> %s</div>" % unicodify(test.shortDescription()), file=f.file)
             if status:
-                print("<div><span class='label'>Status:</span> %s</div>" % status, file=f.file)
+                print(u"<div><span class='label'>Status:</span> %s</div>" % unicodify(status), file=f.file)
             if test.capturedOutput:
-                print("<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter, file=f.file)
-                print("<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( test.capturedOutput ) ), file=f.file)
+                print(u"<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter, file=f.file)
+                print(u"<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, unicodify(cgi.escape( test.capturedOutput ) )), file=f.file)
             if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
-                print("<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter, file=f.file)
-                print("<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % ( f.counter, cgi.escape( "\n".join( test.capturedLogging ) ) ), file=f.file)
+                print(u"<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter, file=f.file)
+                print(u"<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % ( f.counter, unicodify(cgi.escape( "\n".join( test.capturedLogging ) )) ), file=f.file)
             if error:
-                print("<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter, file=f.file)
-                print("<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, cgi.escape( error ) ), file=f.file)
-            print("</div>", file=f.file)
+                print(u"<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter, file=f.file)
+                print(u"<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, unicodify(cgi.escape( error )) ), file=f.file)
+            print(u"</div>", file=f.file)
             f.file.flush()
 
     def addSkip(self, test):
@@ -108,7 +121,7 @@ class NoseHTML( Plugin ):
         self.print_test( 'deprecated', test )
 
 
-HTML_START = """
+HTML_START = u"""
 <html>
 <head>
 <style>
@@ -170,7 +183,7 @@ function toggle(name){
 <body>
 """
 
-HTML_END = """
+HTML_END = u"""
 </body>
 </html>
 """
