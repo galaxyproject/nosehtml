@@ -1,15 +1,18 @@
+from __future__ import print_function
+
+import cgi
+import errno
 import os
+import traceback
+
 from nose.plugins.base import Plugin
 
-import traceback
-import datetime
-import errno
-import cgi
 
 class LogFile( object ):
     def __init__( self, file, counter ):
         self.file = file
         self.counter = counter
+
 
 class NoseHTML( Plugin ):
     """
@@ -23,7 +26,7 @@ class NoseHTML( Plugin ):
         Plugin.add_options(self, parser, env)
         parser.add_option("--html-report-file", action="store", default="nose_report.html", dest="report_file", help="File to output HTML report to")
         parser.add_option("--html-error-file", action="store", default="/dev/null", dest="error_file", help="File to output HTML error report to")
-    
+
     def configure(self, options, config):
         Plugin.configure(self, options, config)
         self.conf = config
@@ -34,18 +37,18 @@ class NoseHTML( Plugin ):
         self.reportlog = LogFile( open( self.report_fname, "w" ), 0 )
         self.errorlog = LogFile( open( self.error_fname, "w" ), 0 )
         for f in ( self.reportlog.file, self.errorlog.file ):
-            print >> f, HTML_START
+            print(HTML_START, file=f)
             f.flush()
-        
+
     def finalize(self, result):
         for f in ( self.reportlog.file, self.errorlog.file ):
-            print >> f, HTML_END
+            print(HTML_END, file=f)
             # When run via buildbot on NFS on Solaris, this close() will encounter
             # the NFS bug described in OpenSolaris bug ID #6708290.  So we work
             # around that bug.
             try:
                 f.close()
-            except IOError, e:
+            except IOError as e:
                 if e.errno != errno.EINVAL:
                     raise
 
@@ -55,23 +58,23 @@ class NoseHTML( Plugin ):
             fs.append( self.errorlog )
         for f in fs:
             f.counter += 1
-            print >> f.file, "<div class='test %s'>" % status
+            print("<div class='test %s'>" % status, file=f.file)
             if test.id():
-                print >> f.file, "<div><span class='label'>ID:</span> %s</div>" % test.id()
+                print("<div><span class='label'>ID:</span> %s</div>" % test.id(), file=f.file)
             if test.shortDescription():
-                print >> f.file, "<div><span class='label'>Description:</span> %s</div>" % test.shortDescription()
+                print("<div><span class='label'>Description:</span> %s</div>" % test.shortDescription(), file=f.file)
             if status:
-                print >> f.file, "<div><span class='label'>Status:</span> %s</div>" % status
+                print("<div><span class='label'>Status:</span> %s</div>" % status, file=f.file)
             if test.capturedOutput:
-                print >> f.file, "<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter
-                print >> f.file, "<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( test.capturedOutput ) )
+                print("<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter, file=f.file)
+                print("<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, cgi.escape( test.capturedOutput ) ), file=f.file)
             if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
-                print >> f.file, "<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter
-                print >> f.file, "<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % ( f.counter, cgi.escape( "\n".join( test.capturedLogging ) ) )
+                print("<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter, file=f.file)
+                print("<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % ( f.counter, cgi.escape( "\n".join( test.capturedLogging ) ) ), file=f.file)
             if error:
-                print >> f.file, "<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter
-                print >> f.file, "<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, cgi.escape( error ) )
-            print >> f.file, "</div>"
+                print("<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter, file=f.file)
+                print("<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, cgi.escape( error ) ), file=f.file)
+            print("</div>", file=f.file)
             f.file.flush()
 
     def addSkip(self, test):
@@ -79,13 +82,13 @@ class NoseHTML( Plugin ):
         Test was skipped
         """
         self.print_test( 'skipped', test )
-        
+
     def addSuccess(self, test ):
         """
         Test was successful
         """
         self.print_test( 'success', test )
-            
+
     def addFailure(self, test, error ):
         """
         Test failed
@@ -96,15 +99,14 @@ class NoseHTML( Plugin ):
         """
         Test errored.
         """
-        capture = test.capturedOutput
         self.print_test( 'error', test, '\n'.join( traceback.format_exception( *error ) ) )
-    
+
     def addDeprecated(self, test):
         """
         Test is deprecated
         """
-        capture = test.capturedOutput
         self.print_test( 'deprecated', test )
+
 
 HTML_START = """
 <html>
@@ -154,14 +156,14 @@ pre
 
 <script>
 function toggle(name){
-	var elem = document.getElementById(name)
-	if (elem) {
-		if (elem.style.display=="none"){
-			elem.style.display="block"
-		} else {
-			elem.style.display="none"
-		}
-	}
+    var elem = document.getElementById(name)
+    if (elem) {
+        if (elem.style.display=="none"){
+            elem.style.display="block"
+        } else {
+            elem.style.display="none"
+        }
+    }
 }
 </script>
 </head>
