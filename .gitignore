@@ -1,0 +1,4 @@
+.venv/
+NoseHTML.egg-info/
+build/
+dist/
