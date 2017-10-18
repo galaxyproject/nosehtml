@@ -9,5 +9,7 @@ setup(
     license='MIT',
     install_requires=['nose'],
     packages=['nosehtml'],
-    entry_points={'nose.plugins.0.10': [ 'nosehtml = nosehtml.plugin:NoseHTML' ] }
+    entry_points={
+        'nose.plugins.0.10': ['nosehtml = nosehtml.plugin:NoseHTML']
+    }
 )

@@ -21,13 +21,13 @@ def unicodify(value):
     return value
 
 
-class LogFile( object ):
-    def __init__( self, file, counter ):
+class LogFile(object):
+    def __init__(self, file, counter):
         self.file = file
         self.counter = counter
 
 
-class NoseHTML( Plugin ):
+class NoseHTML(Plugin):
     """
     Styled HTML output plugin for nose.
     """
@@ -47,14 +47,14 @@ class NoseHTML( Plugin ):
         self.error_fname = options.error_file
 
     def begin(self):
-        self.reportlog = LogFile( io.open( self.report_fname, "w", encoding='utf-8' ), 0 )
-        self.errorlog = LogFile( io.open( self.error_fname, "w", encoding='utf-8' ), 0 )
-        for f in ( self.reportlog.file, self.errorlog.file ):
+        self.reportlog = LogFile(io.open(self.report_fname, "w", encoding='utf-8'), 0)
+        self.errorlog = LogFile(io.open(self.error_fname, "w", encoding='utf-8'), 0)
+        for f in (self.reportlog.file, self.errorlog.file):
             print(HTML_START, file=f)
             f.flush()
 
     def finalize(self, result):
-        for f in ( self.reportlog.file, self.errorlog.file ):
+        for f in (self.reportlog.file, self.errorlog.file):
             print(HTML_END, file=f)
             # When run via buildbot on NFS on Solaris, this close() will encounter
             # the NFS bug described in OpenSolaris bug ID #6708290.  So we work
@@ -65,10 +65,10 @@ class NoseHTML( Plugin ):
                 if e.errno != errno.EINVAL:
                     raise
 
-    def print_test( self, status, test, error=None ):
-        fs = [ self.reportlog ]
+    def print_test(self, status, test, error=None):
+        fs = [self.reportlog]
         if error:
-            fs.append( self.errorlog )
+            fs.append(self.errorlog)
         for f in fs:
             f.counter += 1
             print(u"<div class='test %s'>" % unicodify(status), file=f.file)
@@ -80,13 +80,13 @@ class NoseHTML( Plugin ):
                 print(u"<div><span class='label'>Status:</span> %s</div>" % unicodify(status), file=f.file)
             if test.capturedOutput:
                 print(u"<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter, file=f.file)
-                print(u"<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % ( f.counter, unicodify(cgi.escape( test.capturedOutput ) )), file=f.file)
-            if hasattr( test, 'capturedLogging' ) and test.capturedLogging:
+                print(u"<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % (f.counter, unicodify(cgi.escape(test.capturedOutput))), file=f.file)
+            if hasattr(test, 'capturedLogging') and test.capturedLogging:
                 print(u"<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter, file=f.file)
-                print(u"<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % ( f.counter, unicodify(cgi.escape( "\n".join( test.capturedLogging ) )) ), file=f.file)
+                print(u"<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % (f.counter, unicodify(cgi.escape("\n".join(test.capturedLogging)))), file=f.file)
             if error:
                 print(u"<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter, file=f.file)
-                print(u"<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % ( f.counter, unicodify(cgi.escape( error )) ), file=f.file)
+                print(u"<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % (f.counter, unicodify(cgi.escape(error))), file=f.file)
             print(u"</div>", file=f.file)
             f.file.flush()
 
@@ -94,31 +94,31 @@ class NoseHTML( Plugin ):
         """
         Test was skipped
         """
-        self.print_test( 'skipped', test )
+        self.print_test('skipped', test)
 
-    def addSuccess(self, test ):
+    def addSuccess(self, test):
         """
         Test was successful
         """
-        self.print_test( 'success', test )
+        self.print_test('success', test)
 
-    def addFailure(self, test, error ):
+    def addFailure(self, test, error):
         """
         Test failed
         """
-        self.print_test( 'failure', test, '\n'.join( traceback.format_exception( *error ) ) )
+        self.print_test('failure', test, '\n'.join(traceback.format_exception(*error)))
 
-    def addError(self, test, error ):
+    def addError(self, test, error):
         """
         Test errored.
         """
-        self.print_test( 'error', test, '\n'.join( traceback.format_exception( *error ) ) )
+        self.print_test('error', test, '\n'.join(traceback.format_exception(*error)))
 
     def addDeprecated(self, test):
         """
         Test is deprecated
         """
-        self.print_test( 'deprecated', test )
+        self.print_test('deprecated', test)
 
 
 HTML_START = u"""
