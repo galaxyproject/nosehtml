@@ -102,17 +102,23 @@ class NoseHTML(Plugin):
         """
         self.print_test('success', test)
 
-    def addFailure(self, test, error):
+    def addFailure(self, test, err):
         """
         Test failed
         """
-        self.print_test('failure', test, '\n'.join(traceback.format_exception(*error)))
+        err_type, err_value, err_traceback = err
+        if not isinstance(err_value, Exception):
+            err_value = Exception(err_value)
+        self.print_test('failure', test, '\n'.join(traceback.format_exception(err_type, err_value, err_traceback)))
 
-    def addError(self, test, error):
+    def addError(self, test, err):
         """
         Test errored.
         """
-        self.print_test('error', test, '\n'.join(traceback.format_exception(*error)))
+        err_type, err_value, err_traceback = err
+        if not isinstance(err_value, Exception):
+            err_value = Exception(err_value)
+        self.print_test('error', test, '\n'.join(traceback.format_exception(err_type, err_value, err_traceback)))
 
     def addDeprecated(self, test):
         """
