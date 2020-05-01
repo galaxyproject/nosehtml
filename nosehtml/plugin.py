@@ -1,11 +1,15 @@
 from __future__ import print_function
 
-import cgi
 import errno
 import io
 import os
 import sys
 import traceback
+try:
+    from html import escape
+except ImportError:
+    # fallback for python 2
+    from cgi import escaoe
 
 from nose.plugins.base import Plugin
 
@@ -80,13 +84,13 @@ class NoseHTML(Plugin):
                 print(u"<div><span class='label'>Status:</span> %s</div>" % unicodify(status), file=f.file)
             if test.capturedOutput:
                 print(u"<div><span class='label'>Output:</span> <a href=\"javascript:toggle('capture_%d')\">...</a></div>" % f.counter, file=f.file)
-                print(u"<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % (f.counter, unicodify(cgi.escape(test.capturedOutput))), file=f.file)
+                print(u"<div id='capture_%d' style='display: none'><pre class='capture'>%s</pre></div>" % (f.counter, unicodify(escape(test.capturedOutput))), file=f.file)
             if hasattr(test, 'capturedLogging') and test.capturedLogging:
                 print(u"<div><span class='label'>Log:</span> <a href=\"javascript:toggle('log_%d')\">...</a></div>" % f.counter, file=f.file)
-                print(u"<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % (f.counter, unicodify(cgi.escape("\n".join(test.capturedLogging)))), file=f.file)
+                print(u"<div id='log_%d' style='display: none'><pre class='log'>%s</pre></div>" % (f.counter, unicodify(escape("\n".join(test.capturedLogging)))), file=f.file)
             if error:
                 print(u"<div><span class='label'>Exception:</span> <a href=\"javascript:toggle('exception_%d')\">...</a></div>" % f.counter, file=f.file)
-                print(u"<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % (f.counter, unicodify(cgi.escape(error))), file=f.file)
+                print(u"<div id='exception_%d' style='display: none'><pre class='exception'>%s</pre></div>" % (f.counter, unicodify(escape(error))), file=f.file)
             print(u"</div>", file=f.file)
             f.file.flush()
 
