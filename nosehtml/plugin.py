@@ -9,7 +9,7 @@ try:
     from html import escape
 except ImportError:
     # fallback for python 2
-    from cgi import escaoe
+    from cgi import escape
 
 from nose.plugins.base import Plugin
 
