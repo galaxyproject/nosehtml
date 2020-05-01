@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="NoseHTML",
-    version="0.4.5",
+    version="0.4.6",
     description="""HTML Output plugin for Nose / Nosetests""",
     url='https://github.com/galaxyproject/nosehtml',
     author='James Taylor, Nate Coraor, Dave Bouvier',
