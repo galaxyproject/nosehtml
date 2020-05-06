@@ -6,6 +6,7 @@ setup(
     description="""HTML Output plugin for Nose / Nosetests""",
     url='https://github.com/galaxyproject/nosehtml',
     author='James Taylor, Nate Coraor, Dave Bouvier',
+    author_email='james@taylorlab.org',
     license='MIT',
     install_requires=['nose'],
     packages=['nosehtml'],
